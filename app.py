@@ -1,13 +1,10 @@
 import os
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-import yt_dlp
+import requests
 
 app = Flask(__name__)
 CORS(app)
-
-DOWNLOAD_DIR = "/tmp/downloads"
-os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 
 @app.route("/api/download", methods=["POST"])
@@ -18,32 +15,32 @@ def download():
   if not url:
     return jsonify({"error": "Falta la URL"}), 400
 
-  ydl_opts = {
-      "format": "best[ext=mp4]/best",  # Formato seguro compatible directo
-      "outtmpl": os.path.join(DOWNLOAD_DIR, "%(id)s.%(ext)s"),
-      "socket_timeout": 30,
-      "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
-      "nocheckcertificate": True,
-      "geo_bypass": True,
-  }
-
   try:
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-      info = ydl.extract_info(url, download=True)
-      filename = ydl.prepare_filename(info)
-      return jsonify(
-          {"success": True, "filename": os.path.basename(filename)}
+    # Usamos una API pública de extracción directa para evitar bloqueos de IP en datacenters
+    api_url = "https://co.wuk.sh/api/json"
+    payload = {"url": url, "vquality": "720"}
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    response = requests.post(api_url, json=payload, headers=headers)
+    res_data = response.json()
+
+    if res_data.get("status") == "stream" or res_data.get("url"):
+      download_link = res_data.get("url") or res_data.get("picker")[0].get(
+          "url"
       )
+      return jsonify({"success": True, "direct_url": download_link})
+    else:
+      return (
+          jsonify({
+              "error": (
+                  "No se pudo procesar el enlace. Prueba con otro video."
+              )
+          }),
+          500,
+      )
+
   except Exception as e:
     return jsonify({"error": str(e)}), 500
-
-
-@app.route("/api/file/<filename>", methods=["GET"])
-def get_file(filename):
-  file_path = os.path.join(DOWNLOAD_DIR, filename)
-  if os.path.exists(file_path):
-    return send_file(file_path, as_attachment=True)
-  return jsonify({"error": "Archivo no encontrado"}}, 404
 
 
 if __name__ == "__main__":
