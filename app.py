@@ -16,7 +16,6 @@ def download():
     return jsonify({"error": "Falta la URL"}), 400
 
   try:
-    # Usamos una API pública de extracción directa para evitar bloqueos de IP en datacenters
     api_url = "https://co.wuk.sh/api/json"
     payload = {"url": url, "vquality": "720"}
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
