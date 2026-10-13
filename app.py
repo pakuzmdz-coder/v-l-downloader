@@ -19,10 +19,9 @@ def download():
     return jsonify({"error": "Falta la URL"}), 400
 
   ydl_opts = {
-      "format": "best",
+      "format": "best[ext=mp4]/best",  # Formato seguro compatible directo
       "outtmpl": os.path.join(DOWNLOAD_DIR, "%(id)s.%(ext)s"),
       "socket_timeout": 30,
-      # Forzar clientes alternativos para saltar restricciones de bot sin cookies:
       "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
       "nocheckcertificate": True,
       "geo_bypass": True,
@@ -44,7 +43,7 @@ def get_file(filename):
   file_path = os.path.join(DOWNLOAD_DIR, filename)
   if os.path.exists(file_path):
     return send_file(file_path, as_attachment=True)
-  return jsonify({"error": "Archivo no encontrado"}), 404
+  return jsonify({"error": "Archivo no encontrado"}}, 404
 
 
 if __name__ == "__main__":
