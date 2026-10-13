@@ -18,13 +18,14 @@ def download():
   if not url:
     return jsonify({"error": "Falta la URL"}), 400
 
-  # AQUÍ ES DONDE VAS A PEGAR EL NUEVO DICCIONARIO DE OPCIONES:
   ydl_opts = {
       "format": "best",
       "outtmpl": os.path.join(DOWNLOAD_DIR, "%(id)s.%(ext)s"),
-      "socket_timeout": 20,
+      "socket_timeout": 30,
       # Forzar clientes alternativos para saltar restricciones de bot sin cookies:
       "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
+      "nocheckcertificate": True,
+      "geo_bypass": True,
   }
 
   try:
