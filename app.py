@@ -18,17 +18,19 @@ def download():
   if not url:
     return jsonify({"error": "Falta la URL"}), 400
 
+  # AQUÍ ES DONDE VAS A PEGAR EL NUEVO DICCIONARIO DE OPCIONES:
   ydl_opts = {
       "format": "best",
       "outtmpl": os.path.join(DOWNLOAD_DIR, "%(id)s.%(ext)s"),
-      "socket_timeout": 15,
+      "socket_timeout": 20,
+      # Forzar clientes alternativos para saltar restricciones de bot sin cookies:
+      "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
   }
 
   try:
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
       info = ydl.extract_info(url, download=True)
       filename = ydl.prepare_filename(info)
-      # Retornamos la URL completa del archivo procesado
       return jsonify(
           {"success": True, "filename": os.path.basename(filename)}
       )
